@@ -3,6 +3,8 @@
     "ABCDEFGHIJKMNPQRSTUVWXYZ",
     "genpass",
     "rcli",
+    "subcmd",
+    "urlsafe",
     "zxcvbn"
   ]
 }
