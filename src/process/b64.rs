@@ -5,7 +5,7 @@ use base64::{
     Engine as _,
 };
 
-use crate::cli::Base64Format;
+use crate::{cli::Base64Format, get_reader};
 
 pub fn process_encode(input: &str, format: Base64Format) -> anyhow::Result<()> {
     let mut reader: Box<dyn Read> = get_reader(input)?;
@@ -42,16 +42,6 @@ pub fn process_decode(input: &str, format: Base64Format) -> anyhow::Result<()> {
     Ok(())
 }
 
-fn get_reader(input: &str) -> anyhow::Result<Box<dyn Read>> {
-    let reader: Box<dyn Read> = if input == "-" {
-        Box::new(std::io::stdin())
-    } else {
-        Box::new(File::open(input)?)
-    };
-
-    Ok(reader)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -63,10 +53,10 @@ mod tests {
         // assert!(process_encode(input, Base64Format::UrlSafe).is_ok());
     }
 
-    //     #[test]
-    //     fn test_process_decode() {
-    //         let input = "fixtures/base64.txt";
-    //         assert!(process_decode(input, Base64Format::Standard).is_ok());
-    //         // assert!(process_decode(input, Base64Format::UrlSafe).is_ok());
-    //     }
+    // #[test]
+    // fn test_process_decode() {
+    //     let input = "fixtures/base64.txt";
+    //     assert!(process_decode(input, Base64Format::Standard).is_ok());
+    //     // assert!(process_decode(input, Base64Format::UrlSafe).is_ok());
+    // }
 }
