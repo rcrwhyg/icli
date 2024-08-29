@@ -27,6 +27,12 @@ tokio = { version = "1.39.3", features = [
     "net",
     "fs",
 ] }
+tower-http = { version = "0.5.2", features = [
+    "compression-full",
+    "cors",
+    "trace",
+    "fs",
+] }
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.14", features = ["env-filter"] }
 zxcvbn = "3.1.0"
