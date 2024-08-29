@@ -1,9 +1,12 @@
 use std::{fs, io::Read, path::Path};
 
-use anyhow::Ok;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use chacha20poly1305::{
+    aead::{Aead, AeadCore, KeyInit, OsRng},
+    ChaCha20Poly1305,
+};
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
-use rand::rngs::OsRng;
+// use rand::rngs::OsRng;
 
 use crate::{get_reader, TextSignFormat};
 
@@ -86,6 +89,22 @@ pub fn process_text_generate(format: TextSignFormat) -> anyhow::Result<Vec<Vec<u
         TextSignFormat::Blake3 => Blake3::generate(),
         TextSignFormat::Ed25519 => Ed25519Signer::generate(),
     }
+}
+
+pub fn process_text_encrypt(input: &str, key: &str) -> anyhow::Result<String> {
+    let key = ChaCha20Poly1305::new_from_slice(key.as_bytes())?;
+    // let key = GenericArray::from(key);
+    let cipher = ChaCha20Poly1305::from(key);
+    let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
+    let cipher_text = match cipher.encrypt(&nonce, input.as_bytes()) {
+        Ok(cipher_text) => cipher_text,
+        Err(_) => return Err(anyhow::anyhow!("encryption failed")),
+    };
+    Ok(URL_SAFE_NO_PAD.encode(cipher_text))
+}
+
+pub fn process_text_decrypt(_input: &str, _key: &str) -> anyhow::Result<String> {
+    todo!()
 }
 
 impl TextSign for Blake3 {
@@ -227,6 +246,25 @@ mod tests {
         let sig = sk.sign(&mut &data[..])?;
 
         assert!(pk.verify(&data[..], &sig)?);
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_chacha() -> anyhow::Result<()> {
+        let key = ChaCha20Poly1305::generate_key(&mut OsRng);
+        let cipher = ChaCha20Poly1305::new(&key);
+        let nonce: chacha20poly1305::aead::generic_array::GenericArray<u8, _> =
+            ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
+        let cipher_text = match cipher.encrypt(&nonce, b"plaintext message".as_ref()) {
+            Ok(cipher_text) => cipher_text,
+            Err(_) => return Err(anyhow::anyhow!("encryption failed")),
+        };
+        let plaintext = match cipher.decrypt(&nonce, cipher_text.as_ref()) {
+            Ok(plaintext) => plaintext,
+            Err(_) => return Err(anyhow::anyhow!("decryption failed")),
+        };
+        assert_eq!(&plaintext, b"plaintext message");
 
         Ok(())
     }
