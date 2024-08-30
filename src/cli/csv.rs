@@ -1,8 +1,8 @@
+use super::verify_file;
+use clap::Parser;
 use std::{fmt, str::FromStr};
 
-use clap::Parser;
-
-use super::verify_file;
+use crate::{process_csv, CommandExecutor};
 
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {
@@ -28,6 +28,17 @@ pub struct CsvOpts {
     pub header: bool,
 }
 
+impl CommandExecutor for CsvOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let output = if let Some(output) = self.output {
+            output
+        } else {
+            format!("output.{}", self.format)
+        };
+        process_csv(&self.input, output, self.format)
+    }
+}
+
 fn parse_format(format: &str) -> Result<OutputFormat, anyhow::Error> {
     format.parse()
 }
@@ -45,17 +56,16 @@ impl FromStr for OutputFormat {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
+        match s {
             "json" => Ok(OutputFormat::Json),
             "yaml" => Ok(OutputFormat::Yaml),
-            v => anyhow::bail!(format!("Unsupported output format: {}", v)),
+            _ => Err(anyhow::anyhow!("Invalid format")),
         }
     }
 }
 
 impl fmt::Display for OutputFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        // write!(f, "{}", self.to_string())
         write!(f, "{}", Into::<&str>::into(*self))
     }
 }

@@ -33,7 +33,7 @@ pub fn process_genpass(
         password.push(*SYMBOL.choose(&mut rng).expect("SYMBOL won't be empty"));
     }
 
-    for _ in 0..length - (password.len() as u8) {
+    for _ in 0..(length - password.len() as u8) {
         let c = chars
             .choose(&mut rng)
             .expect("chars won't be empty in this context");
@@ -42,7 +42,5 @@ pub fn process_genpass(
 
     password.shuffle(&mut rng);
 
-    let password = String::from_utf8(password)?;
-
-    Ok(password)
+    Ok(String::from_utf8(password)?)
 }

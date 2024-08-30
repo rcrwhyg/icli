@@ -39,10 +39,10 @@ async fn file_handler(
     let p = std::path::Path::new(&state.path).join(path);
     info!("Reading file {:?}", p);
     if !p.exists() {
-        return (
+        (
             StatusCode::NOT_FOUND,
             format!("File {} not Found", p.display()),
-        );
+        )
     } else {
         // TODO: test p is a directory
         // if it is a directory, list all files/subdirectories as

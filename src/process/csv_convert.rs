@@ -1,6 +1,5 @@
 use csv::Reader;
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
 use std::fs;
 
 use crate::cli::OutputFormat;
@@ -23,7 +22,15 @@ pub fn process_csv(input: &str, output: String, format: OutputFormat) -> anyhow:
     let headers = reader.headers()?.clone();
     for result in reader.records() {
         let record = result?;
-        let json_value = headers.iter().zip(record.iter()).collect::<Value>();
+        // headers.iter() -> 使用 headers 的迭代器
+        // record.iter() -> 使用 record 的迭代器
+        // zip() -> 将两个迭代器合并成一个元组的迭代器 [(header, record), ..]
+        // collect::<Value>() -> 将元组的迭代器转换为 JSON Value
+        let json_value = headers
+            .iter()
+            .zip(record.iter())
+            .collect::<serde_json::Value>();
+
         ret.push(json_value);
     }
 

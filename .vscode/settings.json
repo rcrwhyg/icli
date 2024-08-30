@@ -6,6 +6,7 @@
     "dalek",
     "genpass",
     "rcli",
+    "rngs",
     "subcmd",
     "urlsafe",
     "zxcvbn"
