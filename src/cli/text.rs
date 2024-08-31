@@ -69,7 +69,7 @@ pub struct KeyGenerateOpts {
 pub struct TextEncryptOpts {
     #[arg(short, long, value_parser = verify_file, default_value = "-")]
     pub input: String,
-    #[arg(short, long, value_parser = verify_file)]
+    #[arg(short, long)]
     pub key: String,
 }
 
@@ -77,7 +77,7 @@ pub struct TextEncryptOpts {
 pub struct TextDecryptOpts {
     #[arg(short, long, value_parser = verify_file, default_value = "-")]
     pub input: String,
-    #[arg(short, long, value_parser = verify_file)]
+    #[arg(short, long)]
     pub key: String,
 }
 

@@ -10,3 +10,7 @@ GET http://localhost:8080/tower/Cargo.toml
 
 ###
 GET http://localhost:8080/tower/fixtures/blake3.txt
+
+###
+GET http://localhost:8080/index.html
+Accept: text/html

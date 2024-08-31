@@ -1,6 +1,6 @@
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
 use chacha20poly1305::{
-    aead::{Aead, AeadCore, KeyInit},
+    aead::{generic_array::GenericArray, Aead, KeyInit, Payload},
     ChaCha20Poly1305,
 };
 use ed25519_dalek::{Signature, Signer, SigningKey, Verifier, VerifyingKey};
@@ -159,25 +159,44 @@ pub fn process_text_key_generate(
 }
 
 pub fn process_text_encrypt(input: &str, key: &str) -> anyhow::Result<String> {
-    let key = ChaCha20Poly1305::new_from_slice(key.as_bytes())?;
+    let k = ChaCha20Poly1305::new_from_slice(key.as_bytes())?;
     // let key = GenericArray::from(key);
-    let cipher = ChaCha20Poly1305::from(key);
-    let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
+    let cipher = ChaCha20Poly1305::from(k);
+    // let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
+    let nonce = GenericArray::clone_from_slice(key[..12].as_bytes());
     let cipher_text = match cipher.encrypt(&nonce, input.as_bytes()) {
         Ok(cipher_text) => cipher_text,
         Err(_) => return Err(anyhow::anyhow!("encryption failed")),
     };
+
     Ok(URL_SAFE_NO_PAD.encode(cipher_text))
 }
 
-pub fn process_text_decrypt(_input: &str, _key: &str) -> anyhow::Result<String> {
-    todo!()
+pub fn process_text_decrypt(input: &str, key: &str) -> anyhow::Result<String> {
+    let k = ChaCha20Poly1305::new_from_slice(key.as_bytes())?;
+    // let key = GenericArray::from(key);
+    let cipher = ChaCha20Poly1305::from(k);
+
+    // let nonce = std::fs::read("fixtures/chacha20poly1305.nonce")?;
+    let nonce = GenericArray::clone_from_slice(key[..12].as_bytes());
+
+    let cipher_text = URL_SAFE_NO_PAD.decode(input)?;
+    let plaintext = cipher.decrypt(&nonce, Payload::from(cipher_text.as_slice()));
+
+    let plaintext = match plaintext {
+        Ok(plaintext) => plaintext,
+        Err(_) => return Err(anyhow::anyhow!("decryption failed")),
+    };
+    let plaintext = String::from_utf8(plaintext)?;
+
+    Ok(plaintext)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+    use chacha20poly1305::AeadCore;
 
     const KEY: &[u8] = include_bytes!("../../fixtures/blake3.txt");
 
